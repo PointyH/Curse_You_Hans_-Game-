@@ -1,0 +1,18 @@
+Here I'm giving a brief explanation of the game, feel free to play for a little to get bearings:
+The player character has been turned into a bug (ant, blue). As the game progresses he picks up an item called the "Pansecta", which allows him to turn into other insects each with a different skill, collected over the course of the game. These are:
+Ant: blue, default, small to fit under things.
+Grasshopper: green, jumps really high.
+Ladybird: red, can glide.
+Woodlouse: yellow, can curl into a ball and dash to break breakable blocks (brown).
+
+The idea is that one will need to move between different insects (which I have referred to as "modes" in my comments) to make their way through the levels to get the next ability. The final boss is a two headed frog called "Hans Jr" (there is a rational to this, I promise).
+
+The white sections at the end are blocks contained within the assets_invis list to avoid player collision, they determine whether the screen should scroll or the player should move. Move in and out of them to get a feel of what they do.
+
+There's a couple of things to make. I want a bombardier beetle insect option which can shoot acid to attack, not sure how I want that to look yet so have an experiment.
+I'm also considering adding a water and water skater, but not certain yet.
+Another thing could be an enemy. I imagined it to move back and forth until player is a certain distance away but could do anything really. It's just a test.
+
+Also feel free to make the code more efficient, I wrote it relatively quickly so I'm sure there's lot's of improvements to make.
+
+OK should be all, good luck don't break it :)
