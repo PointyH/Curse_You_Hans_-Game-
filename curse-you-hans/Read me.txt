@@ -14,5 +14,6 @@ I'm also considering adding a water and water skater, but not certain yet.
 Another thing could be an enemy. I imagined it to move back and forth until player is a certain distance away but could do anything really. It's just a test.
 
 Also feel free to make the code more efficient, I wrote it relatively quickly so I'm sure there's lot's of improvements to make.
+An example map of the world is added, not super well explained, as it was only meant for me, but I can explain it if necessery.
 
 OK should be all, good luck don't break it :)
