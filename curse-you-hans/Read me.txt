@@ -1,3 +1,4 @@
+Hi Raphy,
 Here I'm giving a brief explanation of the game, feel free to play for a little to get bearings:
 The player character has been turned into a bug (ant, blue). As the game progresses he picks up an item called the "Pansecta", which allows him to turn into other insects each with a different skill, collected over the course of the game. These are:
 Ant: blue, default, small to fit under things.
