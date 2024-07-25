@@ -2,11 +2,25 @@ import pygame as pg
 #import time as t
 import math as maths
 
-from box import Box
+from box import Box, Edge 
 from player import Player
 from enemy import Enemy
 
-from list_mod import sum_val, minus_val
+from functions import sum_val, minus_val
+
+def render_room(room):
+    assets = []
+    assets_invis = []
+    enemies = []
+    
+    for att in room['assets']:
+        assets.append(Box(att[0],att[1],att[2],att[3]))
+    for att in room['edges']:
+        assets_invis.append(Edge(att[0],att[1],att[2]))
+    for att in room['enemies']:
+        enemies.append(Enemy(att[0],att[1],att[2]))
+    player = Player(room['player'][0],room['player'][1],room['player'][2])
+    return assets,assets_invis,enemies,player
 
 pg.init() #initialise pygame
 screen = pg.display.set_mode((800,600)) #create screen
@@ -21,43 +35,39 @@ c_invis = (255,255,255)
 c_lava = (255,102,0)
 c_enemy = (0,255,255)
 
-assets = [] #lrtb for coords
-assets.append(Box([-800,1600,570,600],c_basic)) #create obstacles
-assets.append(Box([-800,1600,0,30],c_basic))
+room1 = {'assets': [[[-800,1600,570,600],c_basic,False,False], #ltrb for coords
+                    [[-800,1600,-600,-570],c_basic,False,False],
+                    [[-800,-770,-600,600],c_basic,False,False],
+                    [[1570,1600,-600,600],c_basic,False,False],
+                    [[0,200,200,530],c_basic,False,False],
+                    [[500,800,400,600],c_basic,False,False],
+                    [[0,200,30,200],c_breakable,True,False],
+                    [[0,200,530,570],c_breakable,True,False],
+                    [[800,1200,570,600],c_lava,False,True]],
+         'edges':[[[1225,1600,-600,600],c_invis,'x'],
+                  [[-800,-425,-600,600],c_invis,'x'],
+                  [[-800,1600,-600,-300],c_invis,'y'],
+                  [[-800,1600,350,600],c_invis,'y']],
+         'enemies': [[[-450,545],[50,25],c_enemy]],
+         'player':[[375,200],[50,25],(0,0,255)]}
 
-assets.append(Box([-800,-770,0,600],c_basic))
-assets.append(Box([1570,1600,0,600],c_basic))
-
-assets.append(Box([0,200,200,530],c_basic))
-assets.append(Box([500,800,400,600],c_basic))
-
-assets.append(Box([0,200,30,200],c_breakable,'breakable')) #breakable ones get broken if dashed into
-assets.append(Box([0,200,530,570],c_breakable,'breakable'))
-
-assets.append(Box([800,1200,570,600],c_lava,'damage')) #lava ones damage
-
-assets_invis = []
-assets_invis.append(Box([1225,1600,0,600],c_invis))
-assets_invis.append(Box([-800,-425,0,600],c_invis)) #invisible blockes at the edges tell it if the player or background should move
-
-enemies = []
-enemies.append(Enemy([-450,470],[100,100],c_enemy))
+assets,assets_invis,enemies,player = render_room(room1)
 
 f_c = 0 #frame counter used to time dashes and invincibility after taking damage
 print('Lives:',p.lives[0])
 running = True
 while running: #start game!
-    #print(p.state)
     screen.fill((0,0,0)) #make the screen black
     pressed = pg.key.get_pressed()
-    if pressed[pg.K_a] and p.velo[0] > -d: #if a or d is pressed move left or right
-        p.velo[0] -= d
-        p.dir = -1 #direction tells you which way to dash even if you aren't currently moving in a direction
-    if pressed[pg.K_d] and p.velo[0] < d:
-        p.velo[0] += d
-        p.dir = 1
-    if (not pressed[pg.K_d]) and (not pressed[pg.K_a]) and p.state != 'dash':
-        p.velo[0] = 0 #make sure if neither direction is pressed you aren't moving
+    if p.state != 'dash':
+        if pressed[pg.K_a] and p.velo[0] > -d: #if a or d is pressed move left or right
+            p.velo[0] -= d
+            p.dir = -1 #direction tells you which way to dash even if you aren't currently moving in a direction
+        if pressed[pg.K_d] and p.velo[0] < d:
+            p.velo[0] += d
+            p.dir = 1
+        if (not pressed[pg.K_d]) and (not pressed[pg.K_a]) and p.state != 'dash':
+            p.velo[0] = 0 #make sure if neither direction is pressed you aren't moving
     if pressed[pg.K_UP] and p.sort == 2:
         p.state = 'glide' #if up arrow key and player is in gliding mode, glide because that's the glide button.
     
@@ -102,33 +112,43 @@ while running: #start game!
         e.move(assets)
 
     assets,enemies,assets_invis = p.move(assets,enemies,assets_invis) #move
-    p.update_rect() #update player position
+    scroll_check = p.rect.collidelistall(assets_invis)
+    if len(scroll_check) == 0:
+        p.determine_diff(assets,assets_invis,enemies)
+    else:
+        direction = [assets_invis[i].dir for i in scroll_check]
+        if 'x' in direction:
+            locx = p.disp_pos[0]+(p.pos[0]-p.old_pos[0])
+        else:
+            locx = 375
+        if 'y' in direction:
+            locy = p.disp_pos[1]+(p.pos[1]-p.old_pos[1])
+        else:
+            locy = 300
+        p.determine_diff(assets,assets_invis,enemies,locx,locy)
     
     for ob in assets_invis: #put invisible objects on screen for my reference
-        pg.draw.rect(screen,ob.colour,ob.rect) #can be commented out to make them invisible
+        pg.draw.rect(screen,ob.colour,ob.disp_rect) #can be commented out to make them invisible
         pass
-
     if p.lives[1] != 0: #if lives have changed, change the live counter and print to terminal
         p.lives = [p.lives[0]+p.lives[1],0]
         p.invinc_f = f_c #start counting i frames
         print('Lives:',p.lives[0]) #print lives
     elif p.invincible and f_c-p.invinc_f >= 80:
         p.invincible = False #once 80 frames since taking damage are over make not invincible
+        
     if not p.invincible:
-        pg.draw.rect(screen,p.colour,p.rect) #if not invincible display player
+        pg.draw.rect(screen,p.colour,p.disp_rect) #if not invincible display player
     elif p.invincible and maths.floor((f_c-p.invinc_f)/8)%2 == 0:
-        pg.draw.rect(screen,p.colour,p.rect) #if are invincible flash the player
-    if p.lives[1] != 0: #if lives have changed, change the live counter and print to terminal
-        p.lives = [p.lives[0]+p.lives[1],0]
-        p.invinc_f = f_c #start counting i frames
-        print('Lives:',p.lives[0]) #print lives
+        pg.draw.rect(screen,p.colour,p.disp_rect) #if are invincible flash the player
+
     if p.lives[0] == 0:
         running = False
         print('you died :(') #if lives have run out, the player is dead :(
     for ob in assets: #put objects on screen
-        pg.draw.rect(screen,ob.colour,ob.rect)
+        pg.draw.rect(screen,ob.colour,ob.disp_rect)
     for e in enemies:
-        pg.draw.rect(screen,e.colour,e.rect)
+        pg.draw.rect(screen,e.colour,e.disp_rect)
 
     pg.display.update() #update screen
     clock.tick(60) #delay to keep game at 60 fps
