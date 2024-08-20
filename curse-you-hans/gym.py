@@ -12,15 +12,19 @@ def render_room(room):
     assets = []
     assets_invis = []
     enemies = []
+    edges = []
     
     for att in room['assets']:
         assets.append(Box(att[0],att[1],att[2],att[3]))
     for att in room['edges']:
-        assets_invis.append(Edge(att[0],att[1],att[2]))
+        e = Edge(att[0],att[1],att[2])
+        assets_invis.append(e)
+        edges.append(e)
     for att in room['enemies']:
         enemies.append(Enemy(att[0],att[1],att[2]))
     player = Player(room['player'][0],room['player'][1],room['player'][2])
-    return assets,assets_invis,enemies,player
+    boundary = room['boundary']
+    return assets,assets_invis,enemies,player,boundary
 
 pg.init() #initialise pygame
 screen = pg.display.set_mode((800,600)) #create screen
@@ -35,7 +39,7 @@ c_invis = (255,255,255)
 c_lava = (255,102,0)
 c_enemy = (0,255,255)
 
-room1 = {'assets': [[[-800,1600,570,600],c_basic,False,False], #ltrb for coords
+room1 = {'assets': [[[-800,1600,570,600],c_basic,False,False], #lrtb for coords
                     [[-800,1600,-600,-570],c_basic,False,False],
                     [[-800,-770,-600,600],c_basic,False,False],
                     [[1570,1600,-600,600],c_basic,False,False],
@@ -44,14 +48,15 @@ room1 = {'assets': [[[-800,1600,570,600],c_basic,False,False], #ltrb for coords
                     [[0,200,30,200],c_breakable,True,False],
                     [[0,200,530,570],c_breakable,True,False],
                     [[800,1200,570,600],c_lava,False,True]],
-         'edges':[[[1225,1600,-600,600],c_invis,'x'],
-                  [[-800,-425,-600,600],c_invis,'x'],
-                  [[-800,1600,-600,-300],c_invis,'y'],
-                  [[-800,1600,350,600],c_invis,'y']],
+         'edges': [[[-800,-800,-600,600],c_invis,'x'],
+                   [[1600,1600,-600,600],c_invis,'x'],
+                   [[-800,1600,-600,-600],c_invis,'y'],
+                   [[-800,1600,600,600],c_invis,'y']],
          'enemies': [[[-450,545],[50,25],c_enemy]],
-         'player':[[375,200],[50,25],(0,0,255)]}
+         'player': [[375,200],[50,25],(0,0,255)],
+         'boundary':[-800,1600,-600,600]}
 
-assets,assets_invis,enemies,player = render_room(room1)
+assets,assets_invis,enemies,player,boundary = render_room(room1)
 
 f_c = 0 #frame counter used to time dashes and invincibility after taking damage
 print('Lives:',p.lives[0])
@@ -112,21 +117,23 @@ while running: #start game!
         e.move(assets)
 
     assets,enemies,assets_invis = p.move(assets,enemies,assets_invis) #move
-    scroll_check = p.rect.collidelistall(assets_invis)
-    if len(scroll_check) == 0:
-        p.determine_diff(assets,assets_invis,enemies)
-    else:
-        direction = [assets_invis[i].dir for i in scroll_check]
-        if 'x' in direction:
-            locx = p.disp_pos[0]+(p.pos[0]-p.old_pos[0])
-        else:
-            locx = 375
-        if 'y' in direction:
-            locy = p.disp_pos[1]+(p.pos[1]-p.old_pos[1])
-        else:
-            locy = 300
-        p.determine_diff(assets,assets_invis,enemies,locx,locy)
-    
+    locx = 375
+    locy = 400
+    scroll = [abs(boundary[0]-(p.pos[0]+25)),
+              abs(boundary[1]-(p.pos[0]+25)),
+              abs(boundary[2]-(p.pos[1]+p.lens[1]-100)),
+              abs(boundary[3]-(p.pos[1]+p.lens[1]-100))]
+
+    if scroll[0] < 400:
+        locx -= (400-scroll[0])
+    elif scroll[1] < 400:
+        locx += (400-scroll[1])
+    if scroll[2] < 300:
+        locy -= (300-scroll[2])
+    elif scroll[3] < 300:
+        locy += (300-scroll[3])
+    p.scroll_screen(assets,assets_invis,enemies,locx,locy)
+
     for ob in assets_invis: #put invisible objects on screen for my reference
         pg.draw.rect(screen,ob.colour,ob.disp_rect) #can be commented out to make them invisible
         pass

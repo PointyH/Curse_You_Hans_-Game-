@@ -56,6 +56,7 @@ class Player(): #this is the player
         self.state = 'air' #set the state to air
         if self.sort == 3:
             self.has_dash = True #ensure dasher can dash
+        self.old_pos[1] = self.pos[1]
         return
 
     def special(self): #these contain the special moves gliding and dashing
@@ -118,7 +119,8 @@ class Player(): #this is the player
             self.lives[1] = -1
             self.invincible = True
         return
-    def determine_diff(self,assets,assets_invis,enemies,locx=375,locy=300):
+    def scroll_screen(self,assets,assets_invis,enemies,locx,locy):
+        locy -= self.lens[1]
         diffx = self.pos[0]-locx
         diffy = self.pos[1]-locy
         self.disp_pos = [self.pos[0]-diffx,self.pos[1]-diffy]
@@ -131,4 +133,5 @@ class Player(): #this is the player
             ob.update_disp_rect()
         for e in enemies:
             e.disp_pos = [e.pos[0]-diffx,e.pos[1]-diffy]
-            e.update_disp_rect()
+            e.update_disp_rect()        
+        
